@@ -1,8 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
-import prisma from './db/client.js';
 import { config } from 'dotenv';
-import { getSubmissionFromQueueCpp, getSubmissionFromQueuePython } from './queue.js';
+import { getSubmissionFromQueueCpp, getSubmissionFromQueuePython, addResultToQueue } from './queue.js';
 import { runSubmissionInDocker, cleanUpTemp } from './utils.js';
 
 config();
@@ -19,26 +18,8 @@ const activeWorkers = {
   python: 0,
 };
 
-// async function addProblem() {
-//   const newProblem = await prisma.problem.create({
-//     data: {
-//       title: "Addition of Two Numbers",
-//       description: "Given two integers, output their sum.",
-//       inputMethod: "stdin",
-//       outputMethod: "stdout",
-//       testCaseCount: 2,
-//       memoryLimit: 256,
-//       timeLimit: 1,
-//     } 
-//   });
-
-//   console.log(newProblem);
-// }
-
-// addProblem();
-
 async function judgeSubmission(submission) {
-  const id = submission.id;
+  const id = String(submission.id);
   const subPath = path.join(TEMP_DIR, id);
   await fs.mkdir(subPath, { recursive: true });
   console.log(submission);
@@ -47,8 +28,10 @@ async function judgeSubmission(submission) {
     await fs.writeFile(path.join(subPath, codeFileName), submission.code);
     const result = await runSubmissionInDocker(submission.language, submission.problemId, subPath);
     console.log(`Submission ${id} => Verdict: ${result.verdict}`);
-
-    // TODO: Update DB status here
+    submission.verdict = result.verdict;
+    submission.runtime = result.runtime;
+    submission.debugInfo = result.debugInfo;
+    await addResultToQueue(submission);
 
   } catch (err) {
     console.error(`Error handling submission ${id}`, err);

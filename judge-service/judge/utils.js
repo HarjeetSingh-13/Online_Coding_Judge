@@ -65,16 +65,22 @@ export async function runSubmissionInDocker(language, id, subPath) {
       // if (stderr) console.error('[stderr]', stderr);
       const res = stdout.trim().split('\n').pop();
       const result = JSON.parse(res);
-      console.log(result);
       maxRuntime = Math.max(maxRuntime, result.runtime);
       if (result.verdict !== 'Accepted') {
+        if(result.verdict !== 'Compilation Error') {
+          result.verdict = result.verdict + ` on test case ${i}`;
+        } 
         return result;
       }
     } catch (err) {
       console.error('[exec error]', err);
       if (err.stdout) console.log('[stdout]', err.stdout);
       if (err.stderr) console.error('[stderr]', err.stderr);
-      return 'Runtime Error'; 
+      return {
+        verdict: `Runtime Error on test case ${i}`,
+        runtime: 0,
+        debug_info: ''
+      }; 
     }
   }
   return {

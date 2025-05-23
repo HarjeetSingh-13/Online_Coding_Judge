@@ -1,14 +1,23 @@
-const redis = require('redis');
-const { generateId } = require('../utils/idGenerator');
+import redis from 'redis';
+import prisma from '../db/client.js';
 
 const client = redis.createClient({
   url: process.env.REDIS_URL || 'redis://localhost:6379'
 });
 client.connect();
 
-async function handleSubmission({ code, language, problemId }) {
-  const id = await generateId();
-  const submission = { id, code, language, problemId, status: 'queued' };
+async function handleSubmission({ code, language, problemId, userId }) {
+  const submission = await prisma.submission.create({
+    data: {
+      userId: userId,
+      code: code,
+      language: language,
+      problemId: problemId,
+      verdict: 'pending',
+      runtime: 0,
+      debugInfo: ''
+    },
+  });
   switch (language) {
     case 'cpp':
       console.log(submission);
@@ -20,7 +29,7 @@ async function handleSubmission({ code, language, problemId }) {
     default:
       throw new Error('Unsupported language');
   }
-  return id;
+  return submission.id;
 }
 
-module.exports = { handleSubmission };
+export default handleSubmission;

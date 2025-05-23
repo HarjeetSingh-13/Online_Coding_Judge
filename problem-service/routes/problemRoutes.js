@@ -22,7 +22,7 @@ router.get('/:id', problemController.getProblem);
 // secure routes only accessed from secure url with authentication token
 router.post('/', upload.single('testcases'), problemController.createProblem);
 router.put('/:id', problemController.updateProblem);
-router.post('/:id', upload.single('testcases'), problemController.addTestCase);
+router.post('/addtestcase/:id', upload.single('testcases'), problemController.addTestCase);
 router.delete('/:id', problemController.deleteProblem);
 
 export default router;

@@ -24,3 +24,11 @@ export async function getSubmissionFromQueueCpp() {
     return null;
   }
 }
+
+export async function addResultToQueue(result) {
+  try {
+    await client.rPush('result_queue', JSON.stringify(result));
+  } catch (err) {
+    console.error('Queue error:', err);
+  }
+}
