@@ -1,0 +1,249 @@
+import prisma from '../db/client.js';
+import { config } from 'dotenv';
+import unzipper from 'unzipper';
+import path from 'path';
+import fs from 'fs/promises';
+import fss from 'fs';
+import { validateProblemData, validateTestCase } from '../utils/validateProblem.js';
+
+config();
+const PERM_TEST_CASE_DIR = process.env.PERM_TEST_CASE_DIR;
+
+export async function getProblems(req, res) {
+  try {
+    const problems = await prisma.problem.findMany();
+    res.status(200).json(problems);
+  } catch (error) {
+    console.log('Error fetching problems: ', error);
+    res.status(500).json({ message: 'Error fetching problems'});
+  }
+}
+
+export async function getProblem(req, res) {
+    const { id } = req.params;
+    try {
+        const problem = await prisma.problem.findUnique({
+        where: { id: Number(id) },
+        });
+        if (!problem) {
+        return res.status(404).json({ message: 'Problem not found' });
+        }
+        res.status(200).json(problem);
+    } catch (error) {
+        console.log('Error fetching problem: ', error);
+        res.status(500).json({ message: 'Error fetching problem' });
+    }
+}
+
+export async function createProblem(req, res) {
+  const {
+    title,
+    description,
+    inputMethod,
+    outputMethod,
+    testCaseCount,
+    memoryLimit,
+    timeLimit,
+  } = req.body;
+
+  if (
+    !title ||
+    !description ||
+    !inputMethod ||
+    !outputMethod ||
+    !testCaseCount ||
+    !memoryLimit ||
+    !timeLimit
+  ) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ message: 'Testcases file is required' });
+  }
+
+  const dataValidationError = await validateProblemData(req.body);
+  if (dataValidationError) {
+    return res.status(400).json({ message: dataValidationError });
+  }
+
+  const testCaseValidationError = await validateTestCase(req.file, Number(testCaseCount));
+  if (testCaseValidationError) {
+    return res.status(400).json({ message: testCaseValidationError });
+  }
+
+  let problem;
+
+  try {
+    problem = await prisma.problem.create({
+      data: {
+        title,
+        description,
+        inputMethod,
+        outputMethod,
+        testCaseCount: Number(testCaseCount),
+        memoryLimit: Number(memoryLimit),
+        timeLimit: Number(timeLimit),
+      },
+    });
+
+    const problemIdStr = String(problem.id);
+    const targetDir = path.join(PERM_TEST_CASE_DIR, problemIdStr);
+    const tempExtractDir = path.join(targetDir, '__temp__');
+
+    await fs.mkdir(tempExtractDir, { recursive: true });
+
+    await fss.createReadStream(req.file.path)
+      .pipe(unzipper.Extract({ path: tempExtractDir }))
+      .promise();
+
+    const extractedItems = await fs.readdir(tempExtractDir, { withFileTypes: true });
+    const firstItem = extractedItems[0];
+
+    if (firstItem?.isDirectory()) {
+      const innerFolder = path.join(tempExtractDir, firstItem.name);
+      const innerFiles = await fs.readdir(innerFolder);
+      for (const file of innerFiles) {
+        await fs.rename(
+          path.join(innerFolder, file),
+          path.join(targetDir, file)
+        );
+      }
+    } else {
+      for (const item of extractedItems) {
+        await fs.rename(
+          path.join(tempExtractDir, item.name),
+          path.join(targetDir, item.name)
+        );
+      }
+    }
+
+    await fs.rm(tempExtractDir, { recursive: true, force: true });
+    await fs.unlink(req.file.path).catch(() => {});
+
+    return res.status(201).json({ message: 'Problem created successfully', problemId: problem.id });
+
+  } catch (error) {
+    console.error('Error creating problem:', error);
+
+    if (problem?.id) {
+      await prisma.problem.delete({ where: { id: problem.id } }).catch(() => {});
+      await fs.rm(path.join(PERM_TEST_CASE_DIR, String(problem.id)), {
+        recursive: true,
+        force: true,
+      }).catch(() => {});
+    }
+
+    if (req.file?.path) {
+      await fs.unlink(req.file.path).catch(() => {});
+    }
+
+    return res.status(500).json({ message: 'Error creating problem' });
+  }
+}
+
+export async function updateProblem(req, res) {
+  const { id } = req.params;
+  if(!id) {
+    return res.status(400).json({ message: 'Problem ID is required' });
+  }
+  try{
+    const problem = await prisma.problem.findUnique({
+      where: { id: Number(id) },
+    });
+    if (!problem) {
+      return res.status(404).json({ message: 'Problem not found' });
+    }
+    const updateData = {
+      title: req.body.title ?? problem.title,
+      description: req.body.description ?? problem.description,
+      inputMethod: req.body.inputMethod ?? problem.inputMethod,
+      outputMethod: req.body.outputMethod ?? problem.outputMethod,
+      testCaseCount: problem.testCaseCount, 
+      timeLimit: req.body.timeLimit ?? problem.timeLimit,
+    };
+    const dataValidationError = await validateProblemData(updateData);
+    if (dataValidationError) {
+      return res.status(400).json({ message: dataValidationError });
+    }
+    const updatedProblem = await prisma.problem.update({
+      where: { id: Number(id) },
+      data: updateData,
+    });
+
+    res.status(200).json(updatedProblem);
+  } catch (error) {
+    console.error('Error updating problem:', error);
+    res.status(500).json({ message: 'Error updating problem' });
+  }
+}
+
+export async function addTestCase(req, res) {
+  const { id } = req.params;
+  if(!id) {
+    return res.status(400).json({ message: 'Problem ID is required' });
+  }
+  const count = req.body.count;
+  if(!count) {
+    return res.status(400).json({ message: 'Test case count is required' });
+  }
+  if (!req.file) {
+    return res.status(400).json({ message: 'Testcases file is required' });
+  }
+  const dataValidationError = await validateTestCase(req.file, Number(count));
+  if (dataValidationError) {
+    return res.status(400).json({ message: dataValidationError });
+  }
+
+  try{
+    const problem = await prisma.problem.findUnique({
+      where: { id: Number(id) },
+    });
+    if (!problem) {
+      return res.status(404).json({ message: 'Problem not found' });
+    }
+    const targetDir = path.join(PERM_TEST_CASE_DIR, String(problem.id));
+    const tempExtractDir = path.join(targetDir, '__temp__');
+
+    await fs.mkdir(tempExtractDir, { recursive: true });
+
+    await fss.createReadStream(req.file.path)
+      .pipe(unzipper.Extract({ path: tempExtractDir }))
+      .promise();
+
+    const extractedItems = await fs.readdir(tempExtractDir, { withFileTypes: true });
+    const firstItem = extractedItems[0];
+
+    if (firstItem?.isDirectory()) {
+      const innerFolder = path.join(tempExtractDir, firstItem.name);
+      const innerFiles = await fs.readdir(innerFolder);
+      for (const file of innerFiles) {
+        await fs.rename(
+          path.join(innerFolder, file),
+          path.join(targetDir, file)
+        );
+      }
+    } else {
+      for (const item of extractedItems) {
+        await fs.rename(
+          path.join(tempExtractDir, item.name),
+          path.join(targetDir, item.name)
+        );
+      }
+    }
+
+    await fs.rm(tempExtractDir, { recursive: true, force: true });
+    await fs.unlink(req.file.path).catch(() => {});
+
+    return res.status(201).json({ message: 'Test cases added successfully' });
+  } catch (error) {
+    console.error('Error adding test cases:', error);
+
+    if (req.file?.path) {
+      await fs.unlink(req.file.path).catch(() => {});
+    }
+    return res.status(500).json({ message: 'Error adding test cases' });
+  }
+}
+
+export async function deleteProblem(req, res) {}

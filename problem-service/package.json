@@ -1,0 +1,23 @@
+{
+  "name": "problem-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type":"module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^6.8.2",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "multer": "^2.0.0",
+    "unzipper": "^0.12.3"
+  },
+  "devDependencies": {
+    "prisma": "^6.8.2"
+  }
+}
