@@ -1,29 +1,17 @@
 import express from 'express';
 import { config } from 'dotenv';
-import prisma from './db/client.js';
+import userRoutes from './routes/userRoutes.js';
+import problemRoutes from './routes/problemRoutes.js';
+import cookieParser from 'cookie-parser';
 
 config();
+
 const app = express();
+app.use(express.json());
+app.use(cookieParser());
 
-async function init() {
-  try {
-    // const user = await prisma.user.create({
-    //   data: {
-    //     name: 'John Doe',
-    //     email: 'johndoe@gmail.com',
-    //     password: 'password123',
-    //   },
-    // });
-    // console.log('User created:', user);
-
-    const users = await prisma.user.findMany();
-    console.log('All users:', users);
-  } catch (error) {
-    console.error('Error during DB operations:', error);
-  }
-}
-
-init();
+app.use('/auth', userRoutes);
+app.use('/api', problemRoutes);
 
 const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {

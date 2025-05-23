@@ -18,7 +18,7 @@ model User {
 }
 
 model Problem {
-  id            Int      @id @default(autoincrement())
+  id            Int          @id @default(autoincrement())
   title         String
   description   String
   inputMethod   String
@@ -26,16 +26,22 @@ model Problem {
   testCaseCount Int
   memoryLimit   Int
   timeLimit     Int
-  createdAt     DateTime @default(now())
+  createdAt     DateTime     @default(now())
   updatedAt     DateTime
+  Submission    Submission[]
 }
 
 model Submission {
-  id        String   @id
   userId    String
-  title     String
-  content   String
   createdAt DateTime @default(now())
   updatedAt DateTime
+  code      String
+  debugInfo String
+  language  String
+  problemId Int
+  runtime   Int
+  verdict   String
+  id        Int      @id @default(autoincrement())
+  Problem   Problem  @relation(fields: [problemId], references: [id])
   User      User     @relation(fields: [userId], references: [id])
 }

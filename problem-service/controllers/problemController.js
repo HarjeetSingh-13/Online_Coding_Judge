@@ -25,7 +25,7 @@ export async function getProblem(req, res) {
     const problem = await prisma.problem.findUnique({
       where: { id: Number(id) },
     });
-    if (!problem) {
+    if (!problem || problem === null) {
       return res.status(404).json({ message: 'Problem not found' });
     }
     res.status(200).json(problem);
