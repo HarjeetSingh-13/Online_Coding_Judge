@@ -34,6 +34,6 @@ export async function getProblemById(req, res) {
 			} else{
 				console.error('Error fetching problem:', error);
 				return res.status(500).json({ error: 'Internal Server Error' });
-			}
-		});
+		}
+	});
 }

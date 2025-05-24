@@ -1,26 +1,46 @@
 import express from 'express';
 import prisma from '../db/client.js';
 import handleSubmission from '../services/submitter.js';
+import { authenticateJWT } from 'shared';
+import axios from 'axios';
+import { config } from 'dotenv';
+
+config();
 
 const router = express.Router();
 
-router.post('/submit', async (req, res) => {
-  const { userId, code, language, problemId } = req.body;
+router.post('/submit', authenticateJWT, async (req, res) => {
+  const userId = req.userId;
+  console.log(req.userId);
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const { code, language, problemId } = req.body;
   console.log('Received submission:', { code, language, problemId, userId });
   if (!code || !language || !problemId || !userId) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
-  const problem = await prisma.problem.findUnique({
-    where: { id: problemId },
-  });
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
-  }
+  // const problem = await prisma.problem.findUnique({
+  //   where: { id: problemId },
+  // });
+  const problem = await axios.get(`${process.env.PROBLEM_SERVICE_URL}/api/problems/${problemId}`)
+    .then(response => response.data)
+    .catch(error => {
+      console.error('Error fetching problem:', error);
+      return null;
+    });
+
   if (!problem) {
     return res.status(404).json({ error: 'Problem not found' });
+  }
+  const user = await axios.get(`${process.env.USER_SERVICE_URL}/auth/user/${userId}`)
+    .then(response => response.data)
+    .catch(error => {
+      console.error('Error fetching user:', error);
+      return null;
+    });
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' });
   }
   console.log('Received submission:', { code, language, problemId, userId });
   try {

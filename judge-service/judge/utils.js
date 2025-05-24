@@ -2,18 +2,21 @@ import { exec } from 'child_process';
 import util from 'util';
 import fs from 'fs/promises';
 import path from 'path';
-import prisma from './db/client.js';
+import axios from 'axios';
 import { config } from 'dotenv';
 
 config();
 const INPUT_OUTPUT_PATH = path.resolve(process.env.TEST_INPUT_OUTPUT_PATH);
+const PROBLEM_SERVICE_URL = process.env.PROBLEM_SERVICE_URL;
 
 async function getProblemById(problemId) {
-  const problem = await prisma.problem.findUnique({
-    where: { id: problemId }
-  });
-
-  return problem;
+  try {
+    const response = await axios.get(`${PROBLEM_SERVICE_URL}/api/problems/${problemId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching problem:', error);
+    return null;
+  }
 }
 
 const execAsync = util.promisify(exec);

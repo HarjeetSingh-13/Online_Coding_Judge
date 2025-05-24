@@ -8,7 +8,7 @@ config();
 const app = express();
 
 app.use(cors({
-  origin: process.env.USER_SERVICE_URL,
+  origin: [process.env.USER_SERVICE_URL, process.env.JUDGE_SERVICE_URL],
   credentials: true,
 }));
 

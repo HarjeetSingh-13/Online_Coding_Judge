@@ -1,5 +1,6 @@
 import { config } from 'dotenv';
 import axios from 'axios';
+import { getUserById } from '../services/authServices.js';
 
 config();
 
@@ -11,14 +12,24 @@ export async function submitSolution(req, res) {
 		return res.status(400).json({ message: 'Missing required fields' });
 	}
 	try {
-		// const response = await axios.post(`${process.env.PROBLEM_SERVICE_URL}/api/submit`, {
-		const response = await axios.post(`${process.env.SUBMISSION_SERVICE_URL}/api/submit`, {
-			problemId,
-			language,
-			code,
-			userId
-		});
-
+		const user = await getUserById(userId);
+		if (!user) {
+		res.status(401);
+		throw new Error("User not found");
+		}
+		const token = req.token;
+		const response = await axios.post(`${process.env.SUBMISSION_SERVICE_URL}/api/submit`,
+			{
+				problemId,
+				language,
+				code
+			},
+			{
+				headers: {
+					Authorization: `Bearer ${token}`
+				}
+			}
+		);
 		res.status(200).json(response.data);
 	} catch (error) {
 		console.error('Error submitting solution:', error);

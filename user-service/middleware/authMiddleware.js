@@ -1,6 +1,6 @@
 import { verifyToken } from '../utils/jwt.js';
 import prisma from '../db/client.js';
-import { getUserById } from '../services/userServices.js';
+import { getUserById } from '../services/authServices.js';
 
 export async function authenticateJWT(req, res, next) {
  try {
@@ -23,6 +23,7 @@ export async function authenticateJWT(req, res, next) {
     }
 
     req.user = user;
+    req.token = token;
     next();
   } catch (error) {
     res.status(401);

@@ -33,3 +33,13 @@ export async function loginUser({ email, password }) {
   const token = generateToken({ userId: user.id });
   return token;
 }
+
+export async function getUserById(userId) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+  if (!user) {
+    throw new Error("User not found");
+  }
+  return user;
+}
