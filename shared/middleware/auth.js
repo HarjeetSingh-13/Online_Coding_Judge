@@ -6,7 +6,6 @@ export async function authenticateJWT(req, res, next) {
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
         return res.status(401).json({ message: "Not authorized, please login" });
     }
-
     const token = authHeader.split(" ")[1];
     const decoded = verifyToken(token);
     if (!decoded || !decoded.userId) {
@@ -14,6 +13,7 @@ export async function authenticateJWT(req, res, next) {
     }
 
     req.userId = decoded.userId;
+    req.userRole = decoded.userRole;
     next();
   } catch (error) {
     res.status(401);

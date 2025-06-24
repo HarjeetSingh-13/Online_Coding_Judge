@@ -1,6 +1,8 @@
 import express from 'express';
 import * as problemController from '../controllers/problemController.js';
 import multer from 'multer';
+import { authenticateJWT } from 'shared';
+import { authorizationMiddleware } from '../middlewares/authorizationMiddleware.js';
 
 const router = express.Router();
 const upload = multer({ 
@@ -19,10 +21,10 @@ const upload = multer({
 
 router.get('/', problemController.getProblems);
 router.get('/:id', problemController.getProblem);
-// secure routes only accessed from secure url with authentication token
-router.post('/', upload.single('testcases'), problemController.createProblem);
-router.put('/:id', problemController.updateProblem);
-router.post('/addtestcase/:id', upload.single('testcases'), problemController.addTestCase);
-router.delete('/:id', problemController.deleteProblem);
+
+router.post('/', authenticateJWT, authorizationMiddleware, upload.single('testcases'), problemController.createProblem);
+router.put('/:id', authenticateJWT, authorizationMiddleware, problemController.updateProblem);
+router.post('/addtestcase/:id', authenticateJWT, authorizationMiddleware, upload.single('testcases'), problemController.addTestCase);
+router.delete('/:id', authenticateJWT, authorizationMiddleware, problemController.deleteProblem);
 
 export default router;

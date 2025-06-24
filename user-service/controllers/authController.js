@@ -1,9 +1,10 @@
 import * as authService from '../services/authServices.js';
 
 export async function register(req, res) {
-  const { name, email, password } = req.body;
-  if (!name || !email || !password) {
-    return res.status(400).json({ error: 'Name, email, and password are required' });
+  const { name, email, password, role } = req.body;
+  const roles = ['problem-setter', 'user'];
+  if (!name || !email || !password || !role || !roles.includes(role)) {
+    return res.status(400).json({ error: 'Name, email, role, and password are required' });
   }
   if (password.length < 6) {
     return res.status(400).json({ error: 'Password must be at least 6 characters long' });
@@ -25,12 +26,13 @@ export async function register(req, res) {
       name,
       email,
       password,
+      role,
     });
     res.cookie("token", token, {
       path: "/",
       httpOnly: true,
       expires: new Date(Date.now() + 1000 * 86400), // 1 day
-      sameSite: "none",
+      sameSite: "strict",
       secure: true,
     });
     res.json({ message: 'User created', token });
@@ -53,7 +55,7 @@ export async function login(req, res) {
       path: "/",
       httpOnly: true,
       expires: new Date(Date.now() + 1000 * 86400), // 1 day
-      sameSite: "none",
+      sameSite: "strict",
       secure: true,
     });
     res.json({ message: 'Login successfully', token });
@@ -67,27 +69,9 @@ export async function logout(req, res) {
     path: "/",
     httpOnly: true,
     expires: new Date(0),
-    sameSite: "none",
+    sameSite: "strict",
     secure: true,
   });
   res.json({ message: 'Logout successfully' }
   )
-}
-
-export async function getUserById(req, res) {
-  console.log('getUserById called');
-  const { id } = req.params;
-  console.log('User ID:', id);
-  if (!id) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-  try {
-    const user = await authService.getUserById(id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    res.json(user);
-  } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
 }

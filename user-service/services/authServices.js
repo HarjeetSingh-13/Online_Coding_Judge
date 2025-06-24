@@ -2,7 +2,7 @@ import { hashPassword, verifyPassword } from '../utils/password.js';
 import { generateToken } from '../utils/jwt.js';
 import prisma from '../db/client.js';
 
-export async function registerUser({ name, email, password }) {
+export async function registerUser({ name, email, password, role }) {
   const existingUser = await prisma.user.findUnique({
     where: { email },
   });
@@ -14,10 +14,11 @@ export async function registerUser({ name, email, password }) {
       data: {
       name,
       email,
+      role,
       password: hashed,
       },
   });
-  const token = generateToken({ userId: user.id });
+  const token = generateToken({ userId: user.id, userRole: user.role });
   return token;
 }
 
@@ -30,16 +31,6 @@ export async function loginUser({ email, password }) {
   const valid = await verifyPassword(password, user.password);
   if (!valid) throw new Error('Invalid credentials');
 
-  const token = generateToken({ userId: user.id });
+  const token = generateToken({ userId: user.id, userRole: user.role });
   return token;
-}
-
-export async function getUserById(userId) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
-  if (!user) {
-    throw new Error("User not found");
-  }
-  return user;
 }

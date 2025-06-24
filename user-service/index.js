@@ -1,7 +1,6 @@
 import express from 'express';
 import { config } from 'dotenv';
-import userRoutes from './routes/userRoutes.js';
-import problemRoutes from './routes/problemRoutes.js';
+import routes from './routes/routes.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 
@@ -17,8 +16,7 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-app.use('/auth', userRoutes);
-app.use('/api', problemRoutes);
+app.use('/api', routes);
 
 const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
