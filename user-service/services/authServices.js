@@ -19,7 +19,7 @@ export async function registerUser({ name, email, password, role }) {
       },
   });
   const token = generateToken({ userId: user.id, userRole: user.role });
-  return token;
+  return [token, user.id];
 }
 
 export async function loginUser({ email, password }) {
@@ -32,5 +32,5 @@ export async function loginUser({ email, password }) {
   if (!valid) throw new Error('Invalid credentials');
 
   const token = generateToken({ userId: user.id, userRole: user.role });
-  return token;
+  return [token, user.id];
 }

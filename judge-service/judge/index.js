@@ -3,9 +3,6 @@ import path from 'path';
 import { config } from 'dotenv';
 import { getSubmissionFromQueueCpp, getSubmissionFromQueuePython, addResultToQueue } from './queue.js';
 import { runSubmissionInDocker, cleanUpTemp } from './utils.js';
-import express from 'express';
-
-const app = express();
 
 config();
 
@@ -76,7 +73,3 @@ async function main() {
 }
 
 main();
-
-app.listen(process.env.JUDGE_SERVICE_PORT, () => {
-  console.log(`Judge service is running on port ${process.env.JUDGE_SERVICE_PORT}`);
-});

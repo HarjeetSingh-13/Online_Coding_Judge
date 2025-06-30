@@ -1,14 +1,12 @@
-import { getUserById } from "../services/userServices";
+import { getUser } from "../services/userServices.js";
 
 export async function getUserById(req, res) {
-  console.log('getUserById called');
   const { id } = req.params;
-  console.log('User ID:', id);
   if (!id) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   try {
-    const user = await authService.getUserById(id);
+    const user = await getUser(id);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }

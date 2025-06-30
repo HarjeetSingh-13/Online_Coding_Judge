@@ -1,0 +1,80 @@
+http:
+  port: 8080
+admin:
+  port: 9876
+  host: localhost
+apiEndpoints:
+  user:
+    path: /user*
+  problems:
+    path: /problems*
+    methods: [GET]
+  submission:
+    path: /submission*
+serviceEndpoints:
+  user-service:
+    url: http://localhost:3002
+  submission-service:
+    url: http://localhost:3000
+  problem-service:
+    url: http://localhost:3001
+policies:
+  - basic-auth
+  - cors
+  - expression
+  - key-auth
+  - log
+  - oauth2
+  - proxy
+  - rate-limit
+pipelines:
+  userPipeline:
+    apiEndpoints:
+      - user
+    policies:
+      - log:
+          - action:
+              message: '[USER] ${req.method} ${req.originalUrl}'
+      - cors:
+          - action:
+              origin: '*'
+              methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+              allowedHeaders: ['Content-Type', 'Authorization']
+              credentials: true
+      - proxy:
+          - action:
+              serviceEndpoint: user-service
+
+  problemPipeline:
+    apiEndpoints:
+      - problems
+    policies:
+      - log:
+          - action:
+              message: '[PROBLEM] ${req.method} ${req.originalUrl}'
+      - cors:
+          - action:
+              origin: '*'
+              methods: ['GET', 'OPTIONS']
+              allowedHeaders: ['Content-Type', 'Authorization']
+              credentials: true
+      - proxy:
+          - action:
+              serviceEndpoint: problem-service
+
+  submissionPipeline:
+    apiEndpoints:
+      - submission
+    policies:
+      - log:
+          - action:
+              message: '[SUBMISSION] ${req.method} ${req.originalUrl}'
+      - cors:
+          - action:
+              origin: '*'
+              methods: ['GET', 'POST', 'OPTIONS']
+              allowedHeaders: ['Content-Type', 'Authorization']
+              credentials: true
+      - proxy:
+          - action:
+              serviceEndpoint: submission-service

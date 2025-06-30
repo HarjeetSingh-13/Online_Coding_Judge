@@ -36,7 +36,7 @@ async function workerLoop() {
           debugInfo: result.debugInfo,
         },
       });
-      console.log(`Updated submission ${result.id} with verdict ${result.verdict}`);
+      // console.log(`Updated submission ${result.id} with verdict ${result.verdict}`);
     } else {
       await new Promise(r => setTimeout(r, 500));
     }

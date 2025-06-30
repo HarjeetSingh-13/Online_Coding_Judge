@@ -22,7 +22,7 @@ export async function register(req, res) {
     return res.status(400).json({ error: 'Email must be between 5 and 50 characters long' });
   }
   try {
-    const token = await authService.registerUser({
+    const [token, userId] = await authService.registerUser({
       name,
       email,
       password,
@@ -35,7 +35,7 @@ export async function register(req, res) {
       sameSite: "strict",
       secure: true,
     });
-    res.json({ message: 'User created', token });
+    res.json({ message: 'User created', token, userId });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -47,7 +47,7 @@ export async function login(req, res) {
     return res.status(400).json({ error: 'Email and password are required' });
   }
   try {
-    const token = await authService.loginUser({
+    const [token, userId] = await authService.loginUser({
       email,
       password,
     });
@@ -58,7 +58,7 @@ export async function login(req, res) {
       sameSite: "strict",
       secure: true,
     });
-    res.json({ message: 'Login successfully', token });
+    res.json({ message: 'Login successfully', token, userId });
   } catch (error) {
     res.status(401).json({ error: error.message });
   }

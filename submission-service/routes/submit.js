@@ -4,8 +4,8 @@ import { getSubmissions, submit } from '../controllers/submissionController.js';
 
 const router = express.Router();
 
-router.post('/submit', authenticateJWT, submit);
+router.post('/', authenticateJWT, submit);
 
-router.get('/submissions', getSubmissions);
+router.get('/', getSubmissions);
 
 export default router;

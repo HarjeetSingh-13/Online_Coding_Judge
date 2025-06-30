@@ -20,7 +20,7 @@ async function handleSubmission({ code, language, problemId, userId }) {
   });
   switch (language) {
     case 'cpp':
-      console.log(submission);
+      // console.log(submission);
       await client.rPush('submission_queue_cpp', JSON.stringify(submission));
       break;
     case 'python':
