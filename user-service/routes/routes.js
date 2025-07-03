@@ -10,6 +10,8 @@ router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.get('/logout', authController.logout);
 
+router.get('/me', authenticateJWT, userController.getMe);
+router.post('/change-password', authenticateJWT, userController.changePassword);
 router.get('/:id', userController.getUserById);
 
 // submission service

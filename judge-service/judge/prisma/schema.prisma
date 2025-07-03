@@ -8,17 +8,18 @@ datasource db {
 }
 
 model Problem {
-  id            Int          @id @default(autoincrement())
-  title         String
-  description   String
-  inputMethod   String
-  outputMethod  String
-  testCaseCount Int
-  memoryLimit   Int
-  timeLimit     Int
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  Submission    Submission[]
+  id                Int                 @id @default(autoincrement())
+  title             String
+  description       String
+  inputMethod       String
+  outputMethod      String
+  testCaseCount     Int
+  memoryLimit       Int
+  timeLimit         Int
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  Submission        Submission[]
+  UserProblemStatus UserProblemStatus[]
 }
 
 model Submission {
@@ -29,7 +30,7 @@ model Submission {
   debugInfo String
   language  String
   problemId Int
-  runtime   Int
+  runtime   Float
   verdict   String
   id        Int      @id @default(autoincrement())
   Problem   Problem  @relation(fields: [problemId], references: [id])
@@ -37,11 +38,24 @@ model Submission {
 }
 
 model User {
-  id         String       @id
-  name       String
-  email      String       @unique
-  password   String
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime
-  Submission Submission[]
+  id                String              @id
+  name              String
+  email             String              @unique
+  password          String
+  role              String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  Submission        Submission[]
+  UserProblemStatus UserProblemStatus[]
+}
+
+model UserProblemStatus {
+  id        Int     @id @default(autoincrement())
+  userId    String
+  problemId Int
+  status    String
+  Problem   Problem @relation(fields: [problemId], references: [id])
+  User      User    @relation(fields: [userId], references: [id])
+
+  @@unique([userId, problemId])
 }

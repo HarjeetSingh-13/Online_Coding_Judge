@@ -28,9 +28,10 @@ export async function loginUser({ email, password }) {
   });
   if (!user) throw new Error('Invalid credentials');
 
-  const valid = await verifyPassword(password, user.password);
+  const { password: hashedPassword, ...safeUser } = user;
+  const valid = await verifyPassword(password, hashedPassword);
   if (!valid) throw new Error('Invalid credentials');
 
   const token = generateToken({ userId: user.id, userRole: user.role });
-  return [token, user.id];
+  return [token, safeUser];
 }

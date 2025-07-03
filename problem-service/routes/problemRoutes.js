@@ -3,6 +3,7 @@ import * as problemController from '../controllers/problemController.js';
 import multer from 'multer';
 import { authenticateJWT } from 'shared';
 import { authorizationMiddleware } from '../middlewares/authorizationMiddleware.js';
+import { optionalAuth } from '../middlewares/optionalAuthMiddleware.js';
 
 const router = express.Router();
 const upload = multer({ 
@@ -19,8 +20,8 @@ const upload = multer({
     }, 
 });
 
-router.get('/', problemController.getProblems);
-router.get('/:id', problemController.getProblem);
+router.get('/', optionalAuth, problemController.getProblems);
+router.get('/:id', optionalAuth, problemController.getProblem);
 
 router.post('/', authenticateJWT, authorizationMiddleware, upload.single('testcases'), problemController.createProblem);
 router.put('/:id', authenticateJWT, authorizationMiddleware, problemController.updateProblem);

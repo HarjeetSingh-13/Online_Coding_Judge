@@ -9,9 +9,9 @@ export async function authenticateJWT(req, res, next) {
     const token = authHeader.split(" ")[1];
     const decoded = verifyToken(token);
     if (!decoded || !decoded.userId) {
-        return res.status(401).json({ message: "Invalid token" });
+      return res.status(401).json({ message: "Invalid token" });
     }
-
+    
     req.userId = decoded.userId;
     req.userRole = decoded.userRole;
     next();

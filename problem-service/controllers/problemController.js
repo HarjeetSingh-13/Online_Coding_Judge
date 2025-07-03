@@ -11,22 +11,57 @@ const PERM_TEST_CASE_DIR = process.env.PERM_TEST_CASE_DIR;
 
 export async function getProblems(req, res) {
   try {
+    const userId = req.userId;
     const problems = await prisma.problem.findMany();
-    res.status(200).json(problems);
+    let statusMap = new Map();
+
+    if (userId) {
+      const userProblemStatuses = await prisma.userProblemStatus.findMany({
+        where: { userId },
+        select: { problemId: true, status: true },
+      });
+
+      statusMap = new Map(userProblemStatuses.map(s => [s.problemId, s.status]));
+    }
+
+    const enrichedProblems = problems.map(problem => ({
+      ...problem,
+      status: statusMap.get(problem.id) || 'not_attempted',
+    }));
+
+    res.status(200).json(enrichedProblems);
+
   } catch (error) {
-    console.log('Error fetching problems: ', error);
+    console.error('Error fetching problems: ', error);
     res.status(500).json({ message: 'Error fetching problems' });
   }
 }
 
+
 export async function getProblem(req, res) {
   const { id } = req.params;
+  const userId = req.userId;
   try {
     const problem = await prisma.problem.findUnique({
       where: { id: Number(id) },
     });
     if (!problem || problem === null) {
       return res.status(404).json({ message: 'Problem not found' });
+    }
+    problem.status = "not-attempted";
+    if(userId){
+      const userProblemStatus = await prisma.userProblemStatus.findUnique({
+        where : {     
+          userId_problemId: {
+            userId: userId,
+            problemId: Number(id),
+          },
+        },
+        select : { status: true }
+      });
+      if (userProblemStatus) {
+        problem.status = userProblemStatus.status;
+      }
     }
     res.status(200).json(problem);
   } catch (error) {

@@ -11,7 +11,7 @@ const PROBLEM_SERVICE_URL = process.env.PROBLEM_SERVICE_URL;
 
 async function getProblemById(problemId) {
   try {
-    const response = await axios.get(`${PROBLEM_SERVICE_URL}/api/problems/${problemId}`);
+    const response = await axios.get(`${PROBLEM_SERVICE_URL}/problems/${problemId}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching problem:', error);
@@ -69,6 +69,7 @@ export async function runSubmissionInDocker(language, id, subPath) {
       const res = stdout.trim().split('\n').pop();
       const result = JSON.parse(res);
       maxRuntime = Math.max(maxRuntime, result.runtime);
+      console.log(`Test case ${i} result:`, result);
       if (result.verdict !== 'Accepted') {
         if(result.verdict !== 'Compilation Error') {
           result.verdict = result.verdict + ` on test case ${i}`;

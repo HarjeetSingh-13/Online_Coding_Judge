@@ -30,10 +30,10 @@ export async function register(req, res) {
     });
     res.cookie("token", token, {
       path: "/",
-      httpOnly: true,
+      httpOnly: false,
       expires: new Date(Date.now() + 1000 * 86400), // 1 day
       sameSite: "strict",
-      secure: true,
+      secure: false,
     });
     res.json({ message: 'User created', token, userId });
   } catch (error) {
@@ -47,18 +47,18 @@ export async function login(req, res) {
     return res.status(400).json({ error: 'Email and password are required' });
   }
   try {
-    const [token, userId] = await authService.loginUser({
+    const [token, user] = await authService.loginUser({
       email,
       password,
     });
     res.cookie("token", token, {
       path: "/",
-      httpOnly: true,
+      httpOnly: false,
       expires: new Date(Date.now() + 1000 * 86400), // 1 day
       sameSite: "strict",
-      secure: true,
+      secure: false,
     });
-    res.json({ message: 'Login successfully', token, userId });
+    res.json({ message: 'Login successfully', token, user });
   } catch (error) {
     res.status(401).json({ error: error.message });
   }
@@ -67,10 +67,10 @@ export async function login(req, res) {
 export async function logout(req, res) {
   res.cookie("token", "", {
     path: "/",
-    httpOnly: true,
+    httpOnly: false,
     expires: new Date(0),
     sameSite: "strict",
-    secure: true,
+    secure: false,
   });
   res.json({ message: 'Logout successfully' }
   )

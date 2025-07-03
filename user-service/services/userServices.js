@@ -10,5 +10,6 @@ export async function getUser(userId) {
   if (!user) {
     throw new Error("User not found");
   }
-  return user;
+  const { password, ...safeUser } = user;
+  return safeUser;
 }

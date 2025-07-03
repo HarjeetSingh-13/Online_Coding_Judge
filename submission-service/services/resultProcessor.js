@@ -28,6 +28,7 @@ async function workerLoop() {
         console.error(`Submission with ID ${result.id} not found`);
         continue;
       }
+      const { userId, problemId } = submission;
       await prisma.submission.update({
         where: { id: result.id },
         data: {
@@ -36,7 +37,41 @@ async function workerLoop() {
           debugInfo: result.debugInfo,
         },
       });
-      // console.log(`Updated submission ${result.id} with verdict ${result.verdict}`);
+      const existing = await prisma.userProblemStatus.findUnique({
+        where: {
+          userId_problemId: {
+            userId,
+            problemId
+          },
+        },
+      });
+
+      if (result.verdict === 'Accepted') {
+        if (!existing) {
+          await prisma.userProblemStatus.create({
+            data: {
+              userId,
+              problemId,
+              status: 'solved',
+            },
+          });
+        } else if (existing.status !== 'solved') {
+          await prisma.userProblemStatus.update({
+            where: { userId_problemId: { userId, problemId } },
+            data: { status: 'solved' },
+          });
+        }
+      } else {
+        if (!existing) {
+          await prisma.userProblemStatus.create({
+            data: {
+              userId,
+              problemId,
+              status: 'attempted',
+            },
+          });
+        }
+      }
     } else {
       await new Promise(r => setTimeout(r, 500));
     }
